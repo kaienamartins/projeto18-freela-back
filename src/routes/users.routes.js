@@ -9,6 +9,6 @@ const authRouter = Router();
 
 authRouter.post("/signup", validateSchema(userSchema), signUpMiddleware, signUp);
 authRouter.post("/signin", validateSchema(loginSchema), signInMiddleware, signIn);
-authRouter.get("/", home);
+authRouter.get("/user/me", home);
 
 export default authRouter;

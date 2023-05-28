@@ -7,4 +7,5 @@ const postsRouter = Router();
 
 postsRouter.post("/posts", validateSchema(postSchema), post);
 
+
 export default postsRouter;
