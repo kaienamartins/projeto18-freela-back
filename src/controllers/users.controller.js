@@ -44,3 +44,22 @@ export async function signIn(req, res) {
     res.status(500).json({ message: "Erro interno do servidor" });
   }
 }
+
+export async function home(req, res) {
+  const userId = res.locals.userId;
+
+  try {
+    const user = await db.query(
+      `SELECT users.id, users.name, users.profilePic, users.biography, posts.image, posts.description, posts.likes, posts.createdat
+      FROM users
+      INNER JOIN posts ON users.id = posts.userid
+      WHERE users.id = $1;`,
+      [userId]
+    );
+
+    res.status(200).json({ user: user.rows[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
+}
+
