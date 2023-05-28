@@ -45,7 +45,7 @@ export async function signIn(req, res) {
   }
 }
 
-export async function home(req, res) {
+export async function getUser(req, res) {
   const userId = res.locals.userId;
 
   try {
@@ -63,3 +63,14 @@ export async function home(req, res) {
   }
 }
 
+export async function searchUser(req, res) {
+  const { name } = req.query;
+
+  try {
+    const finder = await db.query(`SELECT * FROM users WHERE name ILIKE $1;`, [`%${name}%`]);
+
+    res.status(200).send(finder.rows);
+  } catch (error) {
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
+}
