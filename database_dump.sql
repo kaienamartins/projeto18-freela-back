@@ -40,7 +40,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.followers (
     followerid integer NOT NULL,
-    userid integer NOT NULL,
+    followingid integer NOT NULL,
     createdat timestamp without time zone
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE public.followers (
 
 CREATE TABLE public.following (
     followerid integer NOT NULL,
-    userid integer NOT NULL,
+    followingid integer NOT NULL,
     createdat timestamp without time zone
 );
 
@@ -71,6 +71,26 @@ CREATE TABLE public.posts (
 
 
 --
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.posts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
+
+
+--
 -- Name: sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -83,6 +103,26 @@ CREATE TABLE public.sessions (
 
 
 --
+-- Name: sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sessions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sessions_id_seq OWNED BY public.sessions.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -90,10 +130,52 @@ CREATE TABLE public.users (
     id integer NOT NULL,
     name character varying(255),
     password character varying(255),
-    confirmpassword text,
     email character varying(255),
+    profilepic character varying(255),
+    biography character varying(200),
     createdat timestamp without time zone
 );
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: posts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
+
+
+--
+-- Name: sessions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions ALTER COLUMN id SET DEFAULT nextval('public.sessions_id_seq'::regclass);
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
@@ -127,11 +209,32 @@ CREATE TABLE public.users (
 
 
 --
+-- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.posts_id_seq', 1, false);
+
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.sessions_id_seq', 1, false);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 1, false);
+
+
+--
 -- Name: followers pk_followers; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.followers
-    ADD CONSTRAINT pk_followers PRIMARY KEY (followerid, userid);
+    ADD CONSTRAINT pk_followers PRIMARY KEY (followerid, followingid);
 
 
 --
@@ -139,7 +242,7 @@ ALTER TABLE ONLY public.followers
 --
 
 ALTER TABLE ONLY public.following
-    ADD CONSTRAINT pk_following PRIMARY KEY (followerid, userid);
+    ADD CONSTRAINT pk_following PRIMARY KEY (followerid, followingid);
 
 
 --
@@ -148,6 +251,14 @@ ALTER TABLE ONLY public.following
 
 ALTER TABLE ONLY public.posts
     ADD CONSTRAINT posts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
 
 
 --
@@ -175,11 +286,11 @@ ALTER TABLE ONLY public.followers
 
 
 --
--- Name: followers fk_followers_userid; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: followers fk_followers_followingid; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.followers
-    ADD CONSTRAINT fk_followers_userid FOREIGN KEY (userid) REFERENCES public.users(id);
+    ADD CONSTRAINT fk_followers_followingid FOREIGN KEY (followingid) REFERENCES public.users(id);
 
 
 --
@@ -191,11 +302,11 @@ ALTER TABLE ONLY public.following
 
 
 --
--- Name: following fk_following_userid; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: following fk_following_followingid; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.following
-    ADD CONSTRAINT fk_following_userid FOREIGN KEY (userid) REFERENCES public.users(id);
+    ADD CONSTRAINT fk_following_followingid FOREIGN KEY (followingid) REFERENCES public.users(id);
 
 
 --
@@ -204,6 +315,14 @@ ALTER TABLE ONLY public.following
 
 ALTER TABLE ONLY public.posts
     ADD CONSTRAINT fk_posts_userid FOREIGN KEY (userid) REFERENCES public.users(id);
+
+
+--
+-- Name: sessions fk_sessions_userid; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT fk_sessions_userid FOREIGN KEY (userid) REFERENCES public.users(id);
 
 
 --

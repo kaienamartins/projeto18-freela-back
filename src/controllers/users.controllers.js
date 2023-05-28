@@ -3,16 +3,15 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 
 export async function signUp(req, res) {
-  const { name, email, password } = res.locals.userData;
+  const { name, email, password, profilePic, biography } = res.locals.userData;
 
   const hashPass = bcrypt.hashSync(password, 10);
 
   try {
-    await db.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`, [
-      name,
-      email,
-      hashPass,
-    ]);
+    await db.query(
+      `INSERT INTO users (name, password, profilePic, biography, email) VALUES ($1, $2, $3, $4, $5);`,
+      [name, hashPass, profilePic, biography, email]
+    );
 
     return res.status(201).json({ message: "Usuário criado com sucesso!" });
   } catch (err) {

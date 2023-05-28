@@ -2,7 +2,7 @@ import { db } from "../database/database.connection.js";
 import { userSchema, loginSchema } from "../schemas/users.schema.js";
 
 export async function signUpMiddleware(req, res, next) {
-  const { name, email, password, confirmPassword } = req.body;
+  const { name, email, profilePic, biography, password, confirmPassword } = req.body;
 
   try {
     const { error } = userSchema.validate(req.body, { abortEarly: false });
@@ -11,8 +11,22 @@ export async function signUpMiddleware(req, res, next) {
       return res.status(422).json({ message: errors });
     }
 
-    if (!name || !email || !password || !confirmPassword) {
-      return res.status(422).json({ message: "Preencha todos os campos!" });
+    if (name === "" || name === undefined || name === null) {
+      return res.status(422).json({ message: "O nome é obrigatório!" });
+    } else if (email === "" || email === undefined || email === null) {
+      return res.status(422).json({ message: "O email é obrigatório!" });
+    } else if (password === "" || password === undefined || password === null) {
+      return res.status(422).json({ message: "A senha é obrigatória!" });
+    } else if (
+      confirmPassword === "" ||
+      confirmPassword === undefined ||
+      confirmPassword === null
+    ) {
+      return res.status(422).json({ message: "A confirmação de senha é obrigatória!" });
+    } else if (profilePic === "" || profilePic === undefined || profilePic === null) {
+      return res.status(422).json({ message: "A imagem de perfil é obrigatória!" });
+    } else if (biography === "" || biography === undefined || biography === null) {
+      return res.status(422).json({ message: "A biografia é obrigatória!" });
     }
 
     const minPass = 6;
@@ -25,13 +39,28 @@ export async function signUpMiddleware(req, res, next) {
       return res.status(422).json({ message: "Forneça um email válido!" });
     }
 
+    if (password !== confirmPassword) {
+      return res.status(422).json({ message: "As senhas não coincidem!" });
+    }
+
+    if (profilePic) {
+      const profilePicReg = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
+      if (!profilePicReg.test(profilePic)) {
+        return res.status(422).json({ message: "Forneça uma URL de imagem válida!" });
+      }
+    }
+
+    if (biography.length > 200) {
+      return res.status(422).json({ message: "A biografia deve ter no máximo 200 caracteres!" });
+    }
+
     const user = await db.query(`SELECT * FROM users WHERE email = $1;`, [email]);
 
     if (user.rows.length > 0) {
       return res.status(409).json({ message: "Email já cadastrado!" });
     }
 
-    res.locals.userData = { name, email, password };
+    res.locals.userData = { name, email, password, profilePic, biography };
     next();
   } catch (err) {
     return res.status(500).json({ message: "Erro interno do servidor" });
