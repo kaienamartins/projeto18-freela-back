@@ -15,8 +15,7 @@ export async function authToken(req, res, next) {
       return res.status(401).json({ message: "Token de autenticação inválido!" });
     }
 
-    const userId = session.rows[0].userid;
-
+    const userId = session.rows[0].userid; 
     req.locals = {
       userId: userId,
     };

@@ -38,19 +38,14 @@ export async function likePost(req, res) {
       return res.status(404).json({ message: "Post não encontrado!" });
     }
 
-    const likedPost = await db.query("SELECT * FROM post_likes WHERE postId = $1 AND userId = $2", [
-      parsedPostId,
-      userId,
-    ]);
+    const existingLike = await db.query(
+      "INSERT INTO post_likes (postId, userId) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      [parsedPostId, userId]
+    );
 
-    if (likedPost.rows.length > 0) {
+    if (existingLike.rowCount === 0) {
       return res.status(400).json({ message: "Você já deu like nesse post!" });
     }
-
-    await db.query("INSERT INTO post_likes (postId, userId) VALUES ($1, $2)", [
-      parsedPostId,
-      userId,
-    ]);
 
     await db.query("UPDATE posts SET likes = likes + 1 WHERE id = $1", [parsedPostId]);
 
@@ -75,18 +70,9 @@ export async function unlikePost(req, res) {
       return res.status(404).json({ message: "Post não encontrado!" });
     }
 
-    const likedPost = await db.query("SELECT * FROM post_likes WHERE postId = $1 AND userId = $2", [
-      postId,
-      userId,
-    ]);
-
-    if (likedPost.rows.length === 0) {
-      return res.status(400).json({ message: "Você não deu like nesse post!" });
-    }
+    await db.query("DELETE FROM post_likes WHERE postId = $1 AND userId = $2", [postId, userId]);
 
     await db.query("UPDATE posts SET likes = likes - 1 WHERE id = $1", [postId]);
-
-    await db.query("DELETE FROM post_likes WHERE postId = $1 AND userId = $2", [postId, userId]);
 
     return res.status(200).json();
   } catch (err) {

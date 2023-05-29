@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 
 export async function signUp(req, res) {
-  const { name, email, password, profilePic, biography } = req.locals.userData;
+  const { name, email, password, profilePic, biography } = req.body;
 
   const hashPass = bcrypt.hashSync(password, 10);
 
@@ -26,7 +26,7 @@ export async function signUp(req, res) {
 }
 
 export async function signIn(req, res) {
-  const { email, password } = req.locals.loginData;
+  const { email, password } = req.body;
 
   try {
     const user = await db.query("SELECT * FROM users WHERE email = $1;", [email]);
@@ -41,10 +41,15 @@ export async function signIn(req, res) {
     }
 
     const token = uuidv4();
-    await db.query("UPDATE users SET token = $1 WHERE email = $2;", [token, email]);
+
+    await db.query("INSERT INTO sessions (token, userId) VALUES ($1, $2);", [
+      token,
+      user.rows[0].id,
+    ]);
 
     return res.status(200).json({ token });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Erro interno do servidor" });
   }
 }
@@ -70,7 +75,7 @@ export async function getUser(req, res) {
       id: user.rows[0].id,
       name: user.rows[0].name,
       email: user.rows[0].email,
-      profilePic: user.rows[0].profilepic,
+      profilePic: user.rows[0].profilePic,
       biography: user.rows[0].biography,
       posts: [],
     };
@@ -95,7 +100,7 @@ export async function getUser(req, res) {
 
 export async function searchUser(req, res) {
   const { search } = req.query;
-  const { userId } = req.locals;
+  const userId = req.user.id;
 
   try {
     const users = await db.query("SELECT * FROM users WHERE name ILIKE $1;", [`%${search}%`]);
@@ -148,7 +153,24 @@ export async function visitProfile(req, res) {
       [userId, profileId]
     );
 
-    const posts = await db.query("SELECT * FROM posts WHERE userId = $1;", [profileId]);
+    const posts = await db.query(
+      `
+      SELECT 
+        p.id,
+        p.image,
+        p.description,
+        p.likes,
+        COALESCE(pl.like_count, 0) AS like_count
+      FROM posts AS p
+      LEFT JOIN (
+        SELECT postId, COUNT(*) AS like_count
+        FROM post_likes
+        GROUP BY postId
+      ) AS pl ON p.id = pl.postId
+      WHERE p.userId = $1;
+    `,
+      [profileId]
+    );
 
     const userWithPosts = {
       id: profileId,
@@ -157,7 +179,12 @@ export async function visitProfile(req, res) {
       profilePic,
       biography,
       isFollowed: isFollowed.rows.length > 0,
-      posts: posts.rows,
+      posts: posts.rows.map((post) => ({
+        id: post.id,
+        image: post.image,
+        description: post.description,
+        likes: post.like_count,
+      })),
     };
 
     if (userId !== profileId) {

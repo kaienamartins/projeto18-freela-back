@@ -1,4 +1,3 @@
-import { db } from "../database/database.connection.js";
 import { userSchema, loginSchema } from "../schemas/users.schema.js";
 
 export async function signUpMiddleware(req, res, next) {
@@ -52,12 +51,6 @@ export async function signUpMiddleware(req, res, next) {
 
     if (biography.length > 200) {
       return res.status(422).json({ message: "A biografia deve ter no máximo 200 caracteres!" });
-    }
-
-    const user = await db.query(`SELECT * FROM users WHERE email = $1;`, [email]);
-
-    if (user.rows.length > 0) {
-      return res.status(409).json({ message: "Email já cadastrado!" });
     }
 
     res.locals.userData = { name, email, password, profilePic, biography };
